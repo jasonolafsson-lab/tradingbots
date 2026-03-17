@@ -1,0 +1,22 @@
+[Unit]
+Description=Options Trading Bot
+After=ibgateway.service
+Requires=ibgateway.service
+
+[Service]
+Type=simple
+User=optbot
+Group=optbot
+WorkingDirectory=/home/optbot/options_bot
+Environment=DISPLAY=:1
+ExecStart=/home/optbot/options_bot/.venv/bin/python main.py
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=30
+
+# Logging
+StandardOutput=append:/var/log/optbot/bot.log
+StandardError=append:/var/log/optbot/bot.log
+
+[Install]
+WantedBy=multi-user.target

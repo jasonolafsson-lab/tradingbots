@@ -1,0 +1,71 @@
+# ============================================================
+# Ticker Watchlist & Sector Groupings
+# ============================================================
+
+# --- V1 Trading Watchlist ---
+watchlist:
+  - ticker: SPY
+    type: ETF
+    sector: Broad Market
+    expiry_schedule: daily       # 0DTE available every day
+    spread_width: [2, 3]
+  # QQQ, NVDA, TSLA disabled — SPY-only produces best backtest results
+  # - ticker: QQQ
+  #   type: ETF
+  #   sector: Tech / Nasdaq
+  #   expiry_schedule: daily
+  #   spread_width: [2, 3]
+  # - ticker: NVDA
+  #   type: stock
+  #   sector: Semiconductors
+  #   expiry_schedule: weekly_mwf
+  #   spread_width: 5
+  # - ticker: TSLA
+  #   type: stock
+  #   sector: EV / Growth
+  #   expiry_schedule: weekly_mwf
+  #   spread_width: 5
+
+# --- V1.5 Additions (not active in V1) ---
+# watchlist_v15:
+#   - ticker: AMD
+#     type: stock
+#     sector: Semiconductors
+#     theme_group: semis
+#     spread_width: 5
+#   - ticker: COIN
+#     type: stock
+#     sector: Crypto Proxy
+#     theme_group: crypto
+#     spread_width: 5
+#   - ticker: MSTR
+#     type: stock
+#     sector: Crypto Proxy
+#     theme_group: crypto
+#     spread_width: 5
+
+# --- Sector ETFs (tracked, not traded) ---
+sector_etfs:
+  - ticker: XLK
+    sector: Technology
+  - ticker: SOXX
+    sector: Semiconductors
+  - ticker: XLE
+    sector: Energy
+  - ticker: XLF
+    sector: Financials
+  - ticker: XLC
+    sector: Communication Services
+
+# --- Sector-to-Ticker Mapping ---
+# Maps which watchlist tickers belong to which sector
+sector_mapping:
+  Technology:
+    etf: XLK
+    tickers: [QQQ]
+  Semiconductors:
+    etf: SOXX
+    tickers: [NVDA]
+  "EV / Growth":
+    etf: null
+    tickers: [TSLA]

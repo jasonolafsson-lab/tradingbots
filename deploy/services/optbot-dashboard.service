@@ -1,0 +1,20 @@
+[Unit]
+Description=Options Bot Streamlit Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=optbot
+Group=optbot
+WorkingDirectory=/home/optbot/options_bot
+ExecStart=/home/optbot/options_bot/.venv/bin/streamlit run dashboard.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/var/log/optbot/dashboard.log
+StandardError=append:/var/log/optbot/dashboard.log
+
+[Install]
+WantedBy=multi-user.target

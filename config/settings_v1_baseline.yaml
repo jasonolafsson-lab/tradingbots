@@ -1,0 +1,178 @@
+# ============================================================
+# Options Bot Configuration — V1 Paper Trading
+# ============================================================
+
+# --- IBKR Connection ---
+ibkr:
+  host: "127.0.0.1"
+  port: 7497                    # Paper trading ONLY. 7496 (live) is BLOCKED.
+  client_id: 1
+  allowed_accounts: []          # Add your paper account ID here, e.g. ["DU1234567"]
+  timeout_sec: 30
+  readonly: false
+
+# --- Unusual Whales API ---
+unusual_whales:
+  base_url: "https://api.unusualwhales.com"
+  api_token: ""                 # Set via env var UW_API_TOKEN or paste here
+  gex_websocket_url: "wss://api.unusualwhales.com/ws"
+  request_timeout_sec: 10
+  retry_attempts: 3
+  retry_delay_sec: 2
+  # Refresh intervals (seconds)
+  net_premium_refresh: 180      # 3 minutes
+  gex_refresh: 300              # 5 minutes (websocket is real-time)
+  dark_pool_refresh: 300        # 5 minutes
+  flow_alerts_refresh: 60       # 1 minute
+  sector_refresh: 300           # 5 minutes
+
+# --- Trading Window ---
+schedule:
+  premarket_scan_time: "09:00"  # ET
+  market_open: "09:30"          # ET
+  earliest_entry: "09:45"       # ET — after opening range established
+  last_entry: "15:00"           # ET — no new entries after this (55 min buffer)
+  force_close: "15:55"          # ET — all positions closed
+  timezone: "US/Eastern"
+
+# --- Opening Range ---
+opening_range:
+  duration_minutes: 15          # 9:30 - 9:45 AM
+
+# --- Kill Zones (Time-of-Day Filter) ---
+kill_zones:
+  enabled: true
+  windows:
+    - name: "Morning Power Hour"
+      start: "09:45"
+      end: "11:30"
+    - name: "Afternoon Push"
+      start: "14:00"
+      end: "15:00"
+
+# --- Market Regime Filter (Daily EMA Trend) ---
+regime_filter:
+  enabled: false                  # Disabled — hurts performance in backtests
+  fast_ema: 9                   # 9-period EMA on daily closes
+  slow_ema: 21                  # 21-period EMA on daily closes
+  choppy_threshold_pct: 0.003   # EMAs within 0.3% = choppy
+  choppy_size_reduction: 0.50   # Reduce position size by 50% in choppy regime
+
+# --- Risk Parameters ---
+risk:
+  simulated_account_value: 25000 # Override paper account balance ($25K)
+  max_trade_risk_pct: 0.02      # 2% of account value per trade
+  max_notional_pct: 0.05        # 5% of account value max notional
+  max_contracts_single: 10
+  max_contracts_spread: 20
+  daily_loss_limit_pct: 0.03    # -3% daily circuit breaker
+  max_consecutive_losses: 3     # Triggers 30-min cooldown
+  cooldown_after_trade_sec: 300       # 5 minutes
+  cooldown_after_loss_sec: 600        # 10 minutes
+  consecutive_loss_cooldown_sec: 1800 # 30 minutes
+  max_trades_per_day: 6
+
+# --- Stop Loss ---
+stop_loss:
+  single_leg_pct: 0.20          # -20% of entry premium (balanced)
+  spread_pct: 0.30              # -30% of entry debit
+  vol_adjustment_threshold: 1.5 # If ATR > 1.5x avg, widen stop
+  vol_adjustment_extra_pct: 0.05 # Widen by 5%
+
+# --- Take Profit ---
+take_profit:
+  single_leg_pct: 0.50          # +50% take profit (let winners run)
+  spread_pct: 0.80              # +80% of entry debit
+
+# --- Trailing Stop ---
+trailing_stop:
+  activation_pct: 0.25          # Activate at +25% gain (meaningful move)
+  trail_distance_pct: 0.15      # 15% from peak (room to breathe)
+
+# --- Time Stop ---
+time_stop:
+  max_hold_minutes: 30          # 30 min max hold
+
+# --- Gap Risk ---
+gap_risk:
+  day2_gap_threshold_pct: 0.03  # 3% gap triggers size reduction
+  gap_size_reduction: 0.50      # Reduce to 50% size
+
+# --- Strategies (enable/disable) ---
+strategies:
+  momentum:
+    enabled: true
+    adx_threshold: 25
+    volume_ratio_threshold: 1.3
+    delta_min: 0.30
+    delta_max: 0.40
+  reversion:
+    enabled: false                 # Disabled — loses money in every backtest config
+    vwap_sd_threshold: 2.0
+    rsi_oversold: 30
+    rsi_overbought: 70
+    adx_max: 35                 # No reversion in strong trends
+    delta_min: 0.40
+    delta_max: 0.50
+  day2:
+    enabled: true
+    score_threshold: 70
+    spy_selloff_limit: -0.005   # SPY return must be > -0.5%
+    delta_min: 0.35
+    delta_max: 0.45
+  tuesday_reversal:
+    enabled: true
+    monday_red_threshold: -0.005 # Monday SPY close must be red > 0.5%
+    sector_green_count: 2       # At least 2 sectors turning green
+    delta_min: 0.40
+    delta_max: 0.50
+  green_sector:
+    enabled: true
+    spy_red_threshold: -0.003   # SPY must be red > 0.3%
+    sector_names_threshold: 2   # At least 2 names in sector green
+    hold_hours: 2               # Sector must hold green for 2 hours
+    delta_min: 0.30
+    delta_max: 0.50
+  volume_surge_multiplier: 0    # Disabled — too restrictive with few trades
+
+# --- Contract Selection ---
+contracts:
+  delta_hard_min: 0.20          # Never select below this
+  delta_hard_max: 0.60          # Never select above this
+  min_volume: 50                # Minimum option contract volume
+  min_open_interest: 500
+  max_bid_ask_spread_pct: 0.10  # < 10% of midpoint
+  iv_spread_threshold: 50       # IV percentile >= 50 → use spread
+  spread_width_etf: [2, 3]      # $2-$3 for SPY, QQQ
+  spread_width_stock: 5         # $5 for NVDA, TSLA
+
+# --- Order Execution ---
+execution:
+  order_type: "LMT"
+  midpoint_offset: 0.02         # $0.02 above mid for buys
+  fill_timeout_sec: 15
+  max_reprices: 2
+  reprice_step: 0.02            # Each reprice adds $0.02
+
+# --- Intelligence Activation ---
+intelligence:
+  level1_trade_count: 200       # Activate rolling stats
+  level2_trade_count: 500       # Activate ML scoring
+  level2_min_profit_factor: 1.2 # Required PF for ML activation
+  level2_min_level1_trades: 100 # Level 1 must be active 100+ trades
+  level3_min_level2_trades: 200 # Level 2 must be active 200+ trades
+  ml_retrain_day: "Sunday"
+  ml_min_accuracy: 0.52         # Disable ML if accuracy drops below this
+
+# --- Logging ---
+logging:
+  log_dir: "logs"
+  db_path: "data/trades.db"
+  db_backup_dir: "data/backups"
+  level: "INFO"
+
+# --- Safety ---
+safety:
+  blocked_ports: [7496]         # Live trading port — BLOCKED
+  stale_data_timeout_sec: 120   # Halt if no new bar in 2 min
+  kill_switch_file: "KILL"      # Touch this file to trigger emergency shutdown

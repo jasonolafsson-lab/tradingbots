@@ -1,0 +1,23 @@
+[Unit]
+Description=IB Gateway via IBC (Paper Trading)
+After=network-online.target xvfb.service
+Wants=network-online.target
+Requires=xvfb.service
+
+[Service]
+Type=simple
+User=optbot
+Group=optbot
+Environment=DISPLAY=:1
+ExecStart=/opt/ibc/scripts/ibcstart.sh 10.19 --gateway --mode=paper
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=on-failure
+RestartSec=30
+TimeoutStartSec=120
+
+# Logging
+StandardOutput=append:/var/log/optbot/ibgateway.log
+StandardError=append:/var/log/optbot/ibgateway.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Start Bot 3 Mean Reversion on weekday mornings
+
+[Timer]
+OnCalendar=Mon..Fri 09:20:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

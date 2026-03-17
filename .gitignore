@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+
+# Environment / secrets
+.env
+*.env
+
+# Data files (generated at runtime)
+data/trades.db
+data/daily_brief.json
+data/backups/
+data/backtest_cache/
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Kill switch files
+KILL
+KILL_SCALPER
+KILL_REVERSION

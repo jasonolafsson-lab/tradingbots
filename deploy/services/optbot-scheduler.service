@@ -1,0 +1,10 @@
+[Unit]
+Description=Options Bot Market Hours Scheduler
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=optbot
+Group=optbot
+ExecStart=/bin/systemctl start optbot.service

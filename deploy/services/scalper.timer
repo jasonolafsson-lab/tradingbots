@@ -1,0 +1,11 @@
+[Unit]
+Description=Start 0DTE Scalper Bot on weekday mornings
+
+[Timer]
+# 9:25 AM ET — 5 min before market open
+# Bot connects, subscribes to data, waits for Power Hour (3:00 PM ET)
+OnCalendar=Mon..Fri 09:25:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

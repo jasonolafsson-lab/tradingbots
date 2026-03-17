@@ -1,0 +1,9 @@
+[Unit]
+Description=Start Options Bot at 9:00 AM ET Mon-Fri
+
+[Timer]
+OnCalendar=Mon..Fri 09:00 America/New_York
+Persistent=true
+
+[Install]
+WantedBy=timers.target

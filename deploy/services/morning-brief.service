@@ -1,0 +1,19 @@
+[Unit]
+Description=Pre-Market Morning Brief Generator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+EnvironmentFile=/home/optionsbot/options_bot/.env
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python -m intelligence.morning_brief
+
+# Logging
+StandardOutput=append:/var/log/optbot/morning_brief.log
+StandardError=append:/var/log/optbot/morning_brief.log
+
+[Install]
+WantedBy=multi-user.target

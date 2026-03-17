@@ -1,0 +1,22 @@
+[Unit]
+Description=Bot 3 — 0DTE Mean Reversion (Buy-the-Dip)
+After=ibgateway.service
+Requires=ibgateway.service
+
+[Service]
+Type=simple
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+Environment=DISPLAY=:1
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python reversion_live.py
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=30
+
+# Logging
+StandardOutput=append:/var/log/optbot/reversion.log
+StandardError=append:/var/log/optbot/reversion.log
+
+[Install]
+WantedBy=multi-user.target

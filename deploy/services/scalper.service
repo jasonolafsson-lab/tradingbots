@@ -1,0 +1,22 @@
+[Unit]
+Description=0DTE Scalper Bot (Bot 2 — Power Hour)
+After=ibgateway.service
+Requires=ibgateway.service
+
+[Service]
+Type=simple
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+Environment=DISPLAY=:1
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python scalper_live.py
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=30
+
+# Logging
+StandardOutput=append:/var/log/optbot/scalper.log
+StandardError=append:/var/log/optbot/scalper.log
+
+[Install]
+WantedBy=multi-user.target
