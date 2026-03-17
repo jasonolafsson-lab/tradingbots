@@ -602,14 +602,29 @@ class MorningBriefGenerator:
 # Brief Reader (for bots to load)
 # ============================================================
 
-def load_daily_brief() -> Optional[DailyBrief]:
+_cached_brief: Optional[DailyBrief] = None
+_cached_brief_date: Optional[str] = None
+_cached_no_trade_windows: Optional[List[Tuple[dtime, dtime]]] = None
+
+
+def load_daily_brief(force_reload: bool = False) -> Optional[DailyBrief]:
     """
     Load today's daily brief from JSON file.
     Returns None if no brief exists for today.
-    Called by each bot at startup.
+    Called by each bot at startup. Results are cached for the day.
     """
+    global _cached_brief, _cached_brief_date
+
+    today_str = date.today().isoformat()
+
+    # Return cached version if available and from today
+    if not force_reload and _cached_brief is not None and _cached_brief_date == today_str:
+        return _cached_brief
+
     if not BRIEF_PATH.exists():
         logger.info("No daily brief found — running with defaults")
+        _cached_brief = None
+        _cached_brief_date = today_str
         return None
 
     try:
@@ -617,8 +632,10 @@ def load_daily_brief() -> Optional[DailyBrief]:
             data = json.load(f)
 
         # Check it's for today
-        if data.get("date") != date.today().isoformat():
+        if data.get("date") != today_str:
             logger.info(f"Daily brief is from {data.get('date')}, not today — ignoring")
+            _cached_brief = None
+            _cached_brief_date = today_str
             return None
 
         brief = DailyBrief(**{k: v for k, v in data.items()
@@ -627,6 +644,8 @@ def load_daily_brief() -> Optional[DailyBrief]:
             f"Loaded daily brief: sentiment={brief.market_sentiment}, "
             f"risk={brief.risk_level}, events={len(brief.scheduled_events)}"
         )
+        _cached_brief = brief
+        _cached_brief_date = today_str
         return brief
 
     except Exception as e:
@@ -637,10 +656,16 @@ def load_daily_brief() -> Optional[DailyBrief]:
 def get_no_trade_windows() -> List[Tuple[dtime, dtime]]:
     """
     Get today's no-trade windows as (start_time, end_time) tuples.
-    Convenience function for bots to call.
+    Convenience function for bots to call. Results are cached.
     """
+    global _cached_no_trade_windows
+
+    if _cached_no_trade_windows is not None:
+        return _cached_no_trade_windows
+
     brief = load_daily_brief()
     if brief is None:
+        _cached_no_trade_windows = []
         return []
 
     windows = []
@@ -654,6 +679,7 @@ def get_no_trade_windows() -> List[Tuple[dtime, dtime]]:
         except (ValueError, KeyError):
             continue
 
+    _cached_no_trade_windows = windows
     return windows
 
 
