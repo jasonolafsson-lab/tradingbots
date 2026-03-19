@@ -1,0 +1,10 @@
+[Unit]
+Description=Start Finnhub Feed before market open
+
+[Timer]
+# 9:15 AM ET — 15 min before market open to warm up
+OnCalendar=Mon..Fri 09:15:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

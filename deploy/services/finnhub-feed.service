@@ -1,0 +1,19 @@
+[Unit]
+Description=Finnhub Price Feed Streamer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+EnvironmentFile=/home/optionsbot/options_bot/.env
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python finnhub_streamer.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/optbot/finnhub_feed.log
+StandardError=append:/var/log/optbot/finnhub_feed.log
+
+[Install]
+WantedBy=multi-user.target
