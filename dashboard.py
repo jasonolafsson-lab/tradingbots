@@ -1,7 +1,7 @@
 """
 Options Bot Dashboard — Streamlit App
 
-View performance, trade history, and live status for all 3 bots.
+View performance, trade history, and live status for all 4 bots.
 
 Usage:
     source .venv/bin/activate
@@ -36,6 +36,7 @@ BOT_STRATEGIES = {
     "Bot 1 (Momentum)": ["MOMENTUM", "GREEN_SECTOR", "DAY2", "TUESDAY_REVERSAL", "REVERSION"],
     "Bot 2 (Scalper)": ["POWER_HOUR"],
     "Bot 3 (Mean Reversion)": ["MEAN_REVERSION"],
+    "Bot 4 (Credit Spreads)": ["CREDIT_SPREAD"],
 }
 STRATEGY_TO_BOT = {}
 for _bot, _strats in BOT_STRATEGIES.items():
@@ -333,11 +334,11 @@ with tab2:
     if trades.empty:
         st.info("No trades found.")
     else:
-        # Three-column bot comparison
-        bot_cols = st.columns(3)
+        # Four-column bot comparison
+        bot_cols = st.columns(4)
 
         for idx, (bot_name, strat_list) in enumerate(BOT_STRATEGIES.items()):
-            with bot_cols[idx]:
+            with bot_cols[idx % 4]:
                 st.subheader(bot_name)
                 bot_df = trades[trades["strategy"].isin(strat_list)]
 

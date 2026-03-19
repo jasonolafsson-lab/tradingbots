@@ -101,6 +101,7 @@ class DailyBrief:
     bot1_momentum: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot2_scalper: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot3_reversion: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
+    bot4_spreads: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
 
 
 # ============================================================
@@ -404,6 +405,7 @@ def compute_bot_adjustments(
         brief.bot1_momentum = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot2_scalper = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot3_reversion = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
+        brief.bot4_spreads = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         return
 
     if brief.risk_level == "HIGH":
@@ -489,6 +491,39 @@ def compute_bot_adjustments(
         "size_multiplier": round(min(bot3_mult, 1.5), 2),
         "enabled": True,
         "notes": "; ".join(bot3_notes) if bot3_notes else "Normal conditions",
+    }
+
+    # === Bot 4: Credit Spread Seller ===
+    bot4_mult = base_mult
+    bot4_notes = []
+
+    # Credit spreads LOVE high IV — more premium to collect
+    if brief.vix_regime in ("ELEVATED", "HIGH"):
+        bot4_mult *= 1.3
+        bot4_notes.append("Elevated VIX — premium selling favored")
+    elif brief.vix_regime == "LOW":
+        bot4_mult *= 0.7
+        bot4_notes.append("Low VIX — thin premiums, reduce size")
+
+    # Trending days are DANGEROUS for credit spreads (directional risk)
+    if abs(brief.overnight_move_pct) > 1.0:
+        bot4_mult *= 0.5
+        bot4_notes.append("Large overnight move — directional risk for spreads")
+
+    # FOMC days: high IV but also high gamma risk
+    if brief.is_fomc_day:
+        bot4_mult *= 0.6
+        bot4_notes.append("FOMC day — high IV but gamma risk")
+
+    # Calm/neutral days are IDEAL for credit spreads
+    if not brief.is_economic_release_day and abs(brief.overnight_move_pct) < 0.3:
+        bot4_mult *= 1.2
+        bot4_notes.append("Calm market — theta decay environment ideal")
+
+    brief.bot4_spreads = {
+        "size_multiplier": round(min(bot4_mult, 1.5), 2),
+        "enabled": True,
+        "notes": "; ".join(bot4_notes) if bot4_notes else "Normal conditions",
     }
 
 
@@ -700,6 +735,9 @@ def get_bot_size_multiplier(bot_name: str) -> float:
         "bot3": brief.bot3_reversion,
         "reversion": brief.bot3_reversion,
         "mean_reversion": brief.bot3_reversion,
+        "bot4": brief.bot4_spreads,
+        "credit_spread": brief.bot4_spreads,
+        "spreads": brief.bot4_spreads,
     }
 
     adj = bot_map.get(bot_name.lower(), {})
@@ -789,6 +827,11 @@ async def run_morning_brief(dry_run: bool = False) -> DailyBrief:
               f"{'ENABLED' if brief.bot3_reversion['enabled'] else 'DISABLED'}")
         if brief.bot3_reversion.get("notes"):
             print(f"      {brief.bot3_reversion['notes']}")
+
+        print(f"    Bot 4 (Spreads):   size={brief.bot4_spreads['size_multiplier']}x "
+              f"{'ENABLED' if brief.bot4_spreads['enabled'] else 'DISABLED'}")
+        if brief.bot4_spreads.get("notes"):
+            print(f"      {brief.bot4_spreads['notes']}")
 
         print("=" * 60)
 

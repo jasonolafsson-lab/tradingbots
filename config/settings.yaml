@@ -182,3 +182,24 @@ safety:
   blocked_ports: [7496]         # Live trading port — BLOCKED
   stale_data_timeout_sec: 120   # Halt if no new bar in 2 min
   kill_switch_file: "KILL"      # Touch this file to trigger emergency shutdown
+
+# --- Credit Spread Bot (Bot 4) ---
+credit_spread_bot:
+  account_value: 25000
+  risk_per_trade_pct: 0.03          # 3% of account per trade
+  max_contracts: 10
+  ticker: "SPY"                      # SPY (American) or SPX (European, no assignment risk)
+  spread_width: 2                    # $2 spread width for SPY
+  short_leg_delta_min: 0.10          # Minimum delta for short leg
+  short_leg_delta_max: 0.20          # Maximum delta for short leg (sweet spot: ~90% OTM)
+  min_credit: 0.30                   # Minimum $0.30 credit per spread
+  iv_percentile_min: 30              # Only sell when IV percentile > 30
+  take_profit_pct: 0.50              # Close at 50% of max profit (buy back at half credit)
+  stop_loss_multiplier: 2.0          # Close at 2x credit received
+  gamma_warning_multiplier: 1.5      # Tighten stop to 1.5x after 2:30 PM
+  max_trades_per_day: 3
+  max_open_spreads: 2                # Max simultaneous open spreads
+  cooldown_after_trade_sec: 120      # 2 min cooldown after any trade
+  cooldown_after_loss_sec: 300       # 5 min cooldown after a loss
+  daily_loss_limit_pct: 0.05         # -5% daily circuit breaker
+  midpoint_offset: 0.02              # $0.02 price improvement on entries

@@ -39,6 +39,7 @@ class Direction(str, Enum):
 class ContractType(str, Enum):
     SINGLE_LEG = "SINGLE_LEG"
     DEBIT_SPREAD = "DEBIT_SPREAD"
+    CREDIT_SPREAD = "CREDIT_SPREAD"
 
 
 class ExitReason(str, Enum):

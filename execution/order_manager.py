@@ -120,6 +120,70 @@ class OrderManager:
         )
         return trade
 
+    async def submit_credit_spread_entry(
+        self,
+        spread_info: Dict[str, Any],
+        quantity: int,
+    ):
+        """Submit a credit spread entry (SELL the spread, collect credit)."""
+        short_contract = spread_info["short_contract"]
+        long_contract = spread_info["long_contract"]
+        credit = spread_info["credit"]
+
+        legs = [
+            {"contract": short_contract, "action": "SELL", "ratio": 1},
+            {"contract": long_contract, "action": "BUY", "ratio": 1},
+        ]
+
+        # For credit spreads, limit price = credit we want to receive
+        # Slightly reduce to get filled faster
+        limit_price = round(credit - self.midpoint_offset, 2)
+
+        logger.info(
+            f"Submitting credit spread: SELL "
+            f"{spread_info['short_strike']}/{spread_info['long_strike']} "
+            f"{spread_info['right']} {quantity}x @ ${limit_price:.2f} credit"
+        )
+
+        trade = await self.ibkr.place_combo_order(
+            legs=legs,
+            action="SELL",
+            quantity=quantity,
+            limit_price=limit_price,
+        )
+        return trade
+
+    async def close_credit_spread(
+        self,
+        short_contract,
+        long_contract,
+        quantity: int,
+        buy_back_price: float,
+        reason: ExitReason,
+    ):
+        """Close a credit spread by buying it back."""
+        if reason in (ExitReason.EOD_CLOSE, ExitReason.CIRCUIT_BREAKER,
+                      ExitReason.KILL_SWITCH):
+            await self.ibkr.close_all_positions()
+        else:
+            legs = [
+                {"contract": short_contract, "action": "BUY", "ratio": 1},
+                {"contract": long_contract, "action": "SELL", "ratio": 1},
+            ]
+            limit_price = round(buy_back_price + self.midpoint_offset, 2)
+
+            logger.info(
+                f"Closing credit spread: BUY back {quantity}x @ ${limit_price:.2f}"
+            )
+
+            trade = await self.ibkr.place_combo_order(
+                legs=legs,
+                action="BUY",
+                quantity=quantity,
+                limit_price=limit_price,
+            )
+            return trade
+
     async def reprice(self, trade, max_attempts: int = None) -> bool:
         """
         Attempt to reprice an unfilled order by making it more aggressive.
