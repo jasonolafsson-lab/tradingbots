@@ -1,0 +1,22 @@
+[Unit]
+Description=Bot 5 — Opening Range Breakout (ORB)
+After=ibgateway.service
+Requires=ibgateway.service
+
+[Service]
+Type=simple
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+Environment=DISPLAY=:1
+EnvironmentFile=/home/optionsbot/options_bot/.env
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python orb_live.py
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=30
+
+StandardOutput=append:/var/log/optbot/orb.log
+StandardError=append:/var/log/optbot/orb.log
+
+[Install]
+WantedBy=multi-user.target

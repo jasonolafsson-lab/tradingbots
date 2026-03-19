@@ -102,6 +102,7 @@ class DailyBrief:
     bot2_scalper: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot3_reversion: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot4_spreads: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
+    bot5_orb: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
 
 
 # ============================================================
@@ -406,6 +407,7 @@ def compute_bot_adjustments(
         brief.bot2_scalper = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot3_reversion = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot4_spreads = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
+        brief.bot5_orb = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         return
 
     if brief.risk_level == "HIGH":
@@ -524,6 +526,44 @@ def compute_bot_adjustments(
         "size_multiplier": round(min(bot4_mult, 1.5), 2),
         "enabled": True,
         "notes": "; ".join(bot4_notes) if bot4_notes else "Normal conditions",
+    }
+
+    # === Bot 5: Opening Range Breakout (ORB) ===
+    bot5_mult = base_mult
+    bot5_notes = []
+
+    # ORB LOVES trending days — big overnight moves = strong breakouts
+    if abs(brief.overnight_move_pct) > 0.5:
+        bot5_mult *= 1.3
+        bot5_notes.append(f"Overnight move {brief.overnight_move_pct:+.1f}% — strong OR breakout likely")
+    elif abs(brief.overnight_move_pct) > 0.3:
+        bot5_mult *= 1.15
+        bot5_notes.append("Moderate overnight move — decent OR expected")
+
+    # News catalysts drive breakouts
+    if abs(brief.news_sentiment_score) > 0.3:
+        bot5_mult *= 1.2
+        bot5_notes.append("Strong news catalyst — directional breakout likely")
+
+    # Calm days = narrow OR = weak/false breakouts
+    if not brief.is_economic_release_day and abs(brief.overnight_move_pct) < 0.15:
+        bot5_mult *= 0.6
+        bot5_notes.append("Very calm pre-market — narrow OR, weak breakouts likely")
+
+    # FOMC days: OR is unreliable (market waits for announcement)
+    if brief.is_fomc_day:
+        bot5_mult = 0.0
+        bot5_notes.append("FOMC day — OR breakouts unreliable, sitting out")
+
+    # Elevated VIX = wider OR = bigger breakouts
+    if brief.vix_regime in ("ELEVATED", "HIGH"):
+        bot5_mult *= 1.15
+        bot5_notes.append("Elevated VIX — wider opening range expected")
+
+    brief.bot5_orb = {
+        "size_multiplier": round(min(bot5_mult, 1.5), 2) if bot5_mult > 0 else 0.0,
+        "enabled": bot5_mult > 0,
+        "notes": "; ".join(bot5_notes) if bot5_notes else "Normal conditions",
     }
 
 
@@ -738,6 +778,9 @@ def get_bot_size_multiplier(bot_name: str) -> float:
         "bot4": brief.bot4_spreads,
         "credit_spread": brief.bot4_spreads,
         "spreads": brief.bot4_spreads,
+        "bot5": brief.bot5_orb,
+        "orb": brief.bot5_orb,
+        "opening_range": brief.bot5_orb,
     }
 
     adj = bot_map.get(bot_name.lower(), {})
@@ -832,6 +875,11 @@ async def run_morning_brief(dry_run: bool = False) -> DailyBrief:
               f"{'ENABLED' if brief.bot4_spreads['enabled'] else 'DISABLED'}")
         if brief.bot4_spreads.get("notes"):
             print(f"      {brief.bot4_spreads['notes']}")
+
+        print(f"    Bot 5 (ORB):       size={brief.bot5_orb['size_multiplier']}x "
+              f"{'ENABLED' if brief.bot5_orb['enabled'] else 'DISABLED'}")
+        if brief.bot5_orb.get("notes"):
+            print(f"      {brief.bot5_orb['notes']}")
 
         print("=" * 60)
 

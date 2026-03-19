@@ -1,0 +1,10 @@
+[Unit]
+Description=Start Bot 5 ORB before market open
+
+[Timer]
+# 9:20 AM ET — needs time to connect and collect opening range (9:30-9:45)
+OnCalendar=Mon..Fri 09:20:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target
