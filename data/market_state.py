@@ -85,12 +85,13 @@ class TickerState:
     """Complete state for a single ticker, updated every bar."""
     ticker: str
 
-    # --- Price Data (from IBKR) ---
+    # --- Price Data (from Finnhub or IBKR) ---
     bars_1m: List[Bar] = field(default_factory=list)
     bars_3m: List[Bar] = field(default_factory=list)
     last_price: float = 0.0
     bid: float = 0.0
     ask: float = 0.0
+    data_source: str = ""      # "finnhub_ws", "finnhub_poll", or "ibkr"
 
     # --- Computed Indicators ---
     vwap: float = 0.0

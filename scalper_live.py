@@ -34,6 +34,7 @@ import yaml
 from zoneinfo import ZoneInfo
 
 from data.ibkr_client import IBKRClient, IBKRConnectionError, IBKRAccountError
+from data.finnhub_feed import FinnhubFeed
 from data.market_state import (
     Bar, TickerState, MarketState, Signal, Position,
     Regime, Direction, ContractType, ExitReason,
@@ -317,11 +318,12 @@ class ScalperBot:
     async def _main_loop(self):
         """Main event loop — wait for Power Hour, then scalp."""
 
-        # Subscribe to streaming data (always — dry-run still needs bars for signals)
+        # Start Finnhub price feed (replaces IBKR real-time bars to avoid Error 420)
+        self.finnhub_feed = FinnhubFeed(self.market_state, tickers=self.scalper_config.tickers)
+        await self.finnhub_feed.start()
         for ticker in self.scalper_config.tickers:
-            await self.ibkr.subscribe_realtime_bars(ticker)
             self.ticker_states[ticker] = self.market_state.get_ticker(ticker)
-            logger.info(f"Subscribed to {ticker} real-time bars")
+            logger.info(f"Finnhub feed started for {ticker}")
 
         # Wait for bars to accumulate (need context for indicators)
         logger.info("Accumulating bar data for indicators...")

@@ -246,6 +246,9 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 # ──────────────────────────────────────────────
 
 with tab1:
+    # Data Source Indicator
+    st.caption("📡 **Market Data:** Finnhub WebSocket  |  **Order Execution:** IBKR Paper")
+
     if trades.empty:
         st.info("No trades found for the selected filters.")
     else:

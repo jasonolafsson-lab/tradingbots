@@ -47,6 +47,7 @@ import yaml
 from zoneinfo import ZoneInfo
 
 from data.ibkr_client import IBKRClient, IBKRConnectionError, IBKRAccountError
+from data.finnhub_feed import FinnhubFeed
 from data.market_state import (
     Bar, TickerState, MarketState, Signal, Position,
     Regime, Direction, ContractType, ExitReason,
@@ -411,9 +412,10 @@ class GammaScalperBot:
         """Main loop — detect gamma acceleration, ride the wave."""
         ticker = self.gamma_config.ticker
 
-        # Subscribe to streaming data
-        await self.ibkr.subscribe_realtime_bars(ticker)
-        logger.info(f"Subscribed to {ticker} real-time bars")
+        # Start Finnhub price feed (replaces IBKR real-time bars to avoid Error 420)
+        self.finnhub_feed = FinnhubFeed(self.market_state, tickers=[ticker])
+        await self.finnhub_feed.start()
+        logger.info(f"Finnhub feed started for {ticker}")
 
         # Load morning brief
         brief = load_daily_brief()

@@ -11,6 +11,13 @@ ibkr:
   timeout_sec: 30
   readonly: false
 
+# --- Finnhub Price Feed ---
+finnhub:
+  api_key_env: "FINNHUB_API_KEY"
+  websocket_url: "wss://ws.finnhub.io"
+  poll_interval_sec: 5        # fallback polling interval if WS fails
+  bar_aggregation: true       # aggregate trades into 1m/3m bars
+
 # --- Unusual Whales API ---
 unusual_whales:
   base_url: "https://api.unusualwhales.com"

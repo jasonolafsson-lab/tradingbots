@@ -26,6 +26,7 @@ from zoneinfo import ZoneInfo
 from data.ibkr_client import IBKRClient, IBKRConnectionError, IBKRAccountError
 from data.uw_client import UWClient
 from data.market_state import MarketState, TickerState, Regime, Signal, Position
+from data.finnhub_feed import FinnhubFeed
 from scanner.premarket_scanner import PreMarketScanner
 from scanner.sector_tracker import SectorTracker
 from indicators.vwap import VWAPCalculator
@@ -242,9 +243,11 @@ class OptionsBot:
                 await self._check_kill_switch()
                 await asyncio.sleep(5)
 
-        # Subscribe to streaming data
-        for t in watchlist:
-            await self.ibkr.subscribe_realtime_bars(t["ticker"])
+        # Start Finnhub price feed (replaces IBKR real-time bars to avoid Error 420)
+        feed_tickers = [t["ticker"] for t in watchlist]
+        self.finnhub_feed = FinnhubFeed(self.market_state, tickers=feed_tickers)
+        await self.finnhub_feed.start()
+        logger.info(f"Finnhub feed started for {feed_tickers}")
 
         # Wait for opening range to establish
         logger.info("Collecting opening range (9:30-9:45)...")

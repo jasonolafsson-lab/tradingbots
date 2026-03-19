@@ -39,6 +39,7 @@ import yaml
 from zoneinfo import ZoneInfo
 
 from data.ibkr_client import IBKRClient, IBKRConnectionError, IBKRAccountError
+from data.finnhub_feed import FinnhubFeed
 from data.market_state import (
     Bar, TickerState, MarketState, Signal, Position,
     Regime, Direction, ContractType, ExitReason,
@@ -427,10 +428,11 @@ class ORBBot:
     async def _main_loop(self):
         """Main loop — collect OR, then trade breakouts."""
 
-        # Subscribe to real-time bars for all tickers
+        # Start Finnhub price feed (replaces IBKR real-time bars to avoid Error 420)
+        self.finnhub_feed = FinnhubFeed(self.market_state, tickers=self.orb_config.tickers)
+        await self.finnhub_feed.start()
         for ticker in self.orb_config.tickers:
-            await self.ibkr.subscribe_realtime_bars(ticker)
-            logger.info(f"Subscribed to {ticker} real-time bars")
+            logger.info(f"Finnhub feed started for {ticker}")
 
         # Load morning brief
         brief = load_daily_brief()

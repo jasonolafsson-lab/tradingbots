@@ -36,6 +36,7 @@ import yaml
 from zoneinfo import ZoneInfo
 
 from data.ibkr_client import IBKRClient, IBKRConnectionError, IBKRAccountError
+from data.finnhub_feed import FinnhubFeed
 from data.market_state import (
     Bar, TickerState, MarketState, Signal, Position,
     Regime, Direction, ContractType, ExitReason,
@@ -352,9 +353,10 @@ class ReversionBot:
     async def _main_loop(self):
         """Main loop — subscribe to SPY, scan for dip-buy signals all day."""
 
-        # Subscribe to SPY streaming data
-        await self.ibkr.subscribe_realtime_bars("SPY")
-        logger.info("Subscribed to SPY real-time bars")
+        # Start Finnhub price feed (replaces IBKR real-time bars to avoid Error 420)
+        self.finnhub_feed = FinnhubFeed(self.market_state, tickers=["SPY"])
+        await self.finnhub_feed.start()
+        logger.info("Finnhub feed started for SPY")
 
         # Wait for indicators to warm up
         logger.info("Warming up indicators (need ~60 3-min bars for BB)...")
