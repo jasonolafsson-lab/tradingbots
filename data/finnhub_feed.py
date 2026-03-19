@@ -27,7 +27,7 @@ from data.market_state import Bar, MarketState, TickerState
 
 logger = logging.getLogger(__name__)
 
-LIVE_PRICES_PATH = Path(__file__).parent.parent / "data" / "live_prices.json"
+LIVE_PRICES_PATH = (Path(__file__).parent.parent / "data" / "live_prices.json").resolve()
 
 
 def aggregate_3m_bars(bars_1m: List[Bar]) -> List[Bar]:
@@ -83,6 +83,7 @@ class FinnhubFeed:
         self._reader_task = asyncio.create_task(self._reader_loop())
         self._bar_task = asyncio.create_task(self._bar_sync_loop())
         logger.info(f"Finnhub feed (reader) started for {self.tickers}")
+        logger.info(f"Reading prices from: {self.prices_path}")
 
     async def stop(self) -> None:
         """Stop the reader."""

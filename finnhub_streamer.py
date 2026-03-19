@@ -36,7 +36,9 @@ logger = logging.getLogger("finnhub_streamer")
 # All tickers used across all 6 bots
 DEFAULT_TICKERS = ["SPY", "QQQ", "NVDA"]
 
-LIVE_PRICES_PATH = Path(__file__).parent / "data" / "live_prices.json"
+LIVE_PRICES_PATH = (Path(__file__).parent / "data" / "live_prices.json").resolve()
+# Ensure the data directory exists
+LIVE_PRICES_PATH.parent.mkdir(parents=True, exist_ok=True)
 WS_URL = "wss://ws.finnhub.io"
 POLL_URL = "https://finnhub.io/api/v1/quote"
 MAX_1M_BARS = 390  # Full trading day
@@ -76,6 +78,7 @@ class FinnhubStreamer:
             loop.add_signal_handler(sig, lambda: asyncio.create_task(self._shutdown()))
 
         logger.info(f"Finnhub streamer starting for {self.tickers}")
+        logger.info(f"Writing prices to: {LIVE_PRICES_PATH}")
 
         # Run WebSocket, bar builder, and file writer concurrently
         await asyncio.gather(
