@@ -80,9 +80,10 @@ class FinnhubStreamer:
         logger.info(f"Finnhub streamer starting for {self.tickers}")
         logger.info(f"Writing prices to: {LIVE_PRICES_PATH}")
 
-        # Run WebSocket, bar builder, and file writer concurrently
+        # Run WebSocket, quote supplement, bar builder, and file writer concurrently
         await asyncio.gather(
             self._ws_loop(),
+            self._quote_supplement_loop(),
             self._bar_builder_loop(),
             self._file_writer_loop(),
         )
@@ -191,6 +192,47 @@ class FinnhubStreamer:
             except Exception as e:
                 logger.warning(f"Poll error: {e}")
                 await asyncio.sleep(10)
+
+    # ----------------------------------------------------------------
+    # Quote supplement — fills gaps for tickers with sparse WS trades (SPY)
+    # ----------------------------------------------------------------
+
+    async def _quote_supplement_loop(self) -> None:
+        """Poll /quote every 15s for all tickers to supplement WebSocket.
+
+        Finnhub free WS barely streams SPY trades. This ensures every
+        ticker gets price updates at least every 15 seconds, producing
+        real OHLCV bars even when WS trade flow is sparse.
+        """
+        await asyncio.sleep(5)  # Let WS connect first
+        logger.info("Quote supplement loop started (15s interval)")
+        while self._running:
+            try:
+                for ticker in self.tickers:
+                    url = f"{POLL_URL}?symbol={ticker}&token={self.api_key}"
+                    async with self._session.get(
+                        url, timeout=aiohttp.ClientTimeout(total=10)
+                    ) as resp:
+                        if resp.status == 200:
+                            data = await resp.json()
+                            price = data.get("c", 0.0)
+                            high = data.get("h", price)
+                            low = data.get("l", price)
+                            if price > 0:
+                                now = datetime.now()
+                                self._trade_buffers[ticker].append((price, 0, now))
+                                self._last_prices[ticker] = price
+                        elif resp.status == 429:
+                            logger.warning("Quote supplement rate limited, backing off 60s")
+                            await asyncio.sleep(60)
+                            break
+                    await asyncio.sleep(1)  # Small delay between tickers
+                await asyncio.sleep(15)
+            except asyncio.CancelledError:
+                return
+            except Exception as e:
+                logger.warning(f"Quote supplement error: {e}")
+                await asyncio.sleep(15)
 
     # ----------------------------------------------------------------
     # Bar builder
