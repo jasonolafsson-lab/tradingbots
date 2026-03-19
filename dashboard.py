@@ -38,6 +38,7 @@ BOT_STRATEGIES = {
     "Bot 3 (Mean Reversion)": ["MEAN_REVERSION"],
     "Bot 4 (Credit Spreads)": ["CREDIT_SPREAD"],
     "Bot 5 (ORB)": ["ORB_BREAKOUT"],
+    "Bot 6 (Gamma)": ["GAMMA_SCALP"],
 }
 STRATEGY_TO_BOT = {}
 for _bot, _strats in BOT_STRATEGIES.items():
@@ -335,11 +336,11 @@ with tab2:
     if trades.empty:
         st.info("No trades found.")
     else:
-        # Five-column bot comparison
-        bot_cols = st.columns(5)
+        # Six-column bot comparison
+        bot_cols = st.columns(6)
 
         for idx, (bot_name, strat_list) in enumerate(BOT_STRATEGIES.items()):
-            with bot_cols[idx % 5]:
+            with bot_cols[idx % 6]:
                 st.subheader(bot_name)
                 bot_df = trades[trades["strategy"].isin(strat_list)]
 

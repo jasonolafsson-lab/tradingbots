@@ -103,6 +103,7 @@ class DailyBrief:
     bot3_reversion: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot4_spreads: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
     bot5_orb: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
+    bot6_gamma: Dict = field(default_factory=lambda: {"size_multiplier": 1.0, "enabled": True, "notes": ""})
 
 
 # ============================================================
@@ -408,6 +409,7 @@ def compute_bot_adjustments(
         brief.bot3_reversion = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot4_spreads = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         brief.bot5_orb = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
+        brief.bot6_gamma = {"size_multiplier": 0.0, "enabled": False, "notes": "VIX extreme — sitting out"}
         return
 
     if brief.risk_level == "HIGH":
@@ -564,6 +566,39 @@ def compute_bot_adjustments(
         "size_multiplier": round(min(bot5_mult, 1.5), 2) if bot5_mult > 0 else 0.0,
         "enabled": bot5_mult > 0,
         "notes": "; ".join(bot5_notes) if bot5_notes else "Normal conditions",
+    }
+
+    # === Bot 6: Gamma Acceleration Scalper ===
+    bot6_mult = base_mult
+    bot6_notes = []
+
+    # Gamma scalper THRIVES on volatility — bigger VIX = bigger gamma moves
+    if brief.vix_regime in ("ELEVATED", "HIGH"):
+        bot6_mult *= 1.35
+        bot6_notes.append("Elevated VIX — gamma acceleration amplified")
+    elif brief.vix_regime == "LOW":
+        bot6_mult *= 0.6
+        bot6_notes.append("Low VIX — weak gamma moves, reduce size")
+
+    # FOMC days: gamma explodes after the announcement (2:00 PM)
+    if brief.is_fomc_day:
+        bot6_mult *= 1.4
+        bot6_notes.append("FOMC day — massive gamma acceleration after announcement")
+
+    # Trending days = directional gamma moves
+    if abs(brief.overnight_move_pct) > 0.5:
+        bot6_mult *= 1.2
+        bot6_notes.append("Trending day — directional gamma favored")
+
+    # Very calm days = minimal gamma moves
+    if not brief.is_economic_release_day and abs(brief.overnight_move_pct) < 0.1:
+        bot6_mult *= 0.5
+        bot6_notes.append("Ultra-calm pre-market — gamma moves unlikely")
+
+    brief.bot6_gamma = {
+        "size_multiplier": round(min(bot6_mult, 1.5), 2),
+        "enabled": True,
+        "notes": "; ".join(bot6_notes) if bot6_notes else "Normal conditions",
     }
 
 
@@ -781,6 +816,9 @@ def get_bot_size_multiplier(bot_name: str) -> float:
         "bot5": brief.bot5_orb,
         "orb": brief.bot5_orb,
         "opening_range": brief.bot5_orb,
+        "bot6": brief.bot6_gamma,
+        "gamma": brief.bot6_gamma,
+        "gamma_scalper": brief.bot6_gamma,
     }
 
     adj = bot_map.get(bot_name.lower(), {})
@@ -880,6 +918,11 @@ async def run_morning_brief(dry_run: bool = False) -> DailyBrief:
               f"{'ENABLED' if brief.bot5_orb['enabled'] else 'DISABLED'}")
         if brief.bot5_orb.get("notes"):
             print(f"      {brief.bot5_orb['notes']}")
+
+        print(f"    Bot 6 (Gamma):     size={brief.bot6_gamma['size_multiplier']}x "
+              f"{'ENABLED' if brief.bot6_gamma['enabled'] else 'DISABLED'}")
+        if brief.bot6_gamma.get("notes"):
+            print(f"      {brief.bot6_gamma['notes']}")
 
         print("=" * 60)
 

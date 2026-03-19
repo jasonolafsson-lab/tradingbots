@@ -1,0 +1,10 @@
+[Unit]
+Description=Start Bot 6 Gamma Scalper before gamma window
+
+[Timer]
+# 1:50 PM ET — 10 min before the 2:00 PM entry window for warm-up
+OnCalendar=Mon..Fri 13:50:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

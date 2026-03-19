@@ -223,3 +223,23 @@ orb_bot:
   max_trades_per_session: 3          # Max 3 trades in the short window
   cooldown_after_trade_sec: 60       # 1 min cooldown
   daily_loss_limit_pct: 0.03         # -3% daily circuit breaker
+
+# --- Gamma Acceleration Scalper (Bot 6) ---
+gamma_bot:
+  account_value: 25000
+  risk_per_trade_pct: 0.04          # 4% of account per trade
+  max_contracts: 15
+  ticker: "SPY"                      # SPY — highest 0DTE gamma liquidity
+  min_move_pct: 0.001                # SPY must move >= 0.10% in 2 minutes
+  min_move_lookback_bars: 2          # Number of 1-min bars to measure move
+  min_strength: 40                   # Minimum signal strength score
+  delta_target: 0.35                 # Slightly OTM for maximum gamma leverage
+  stop_loss_pct: 0.15                # -15% tight stop (fast trades)
+  take_profit_pct: 0.40              # +40% aggressive TP
+  trail_activation_pct: 0.15         # Activate trailing stop at +15%
+  trail_distance_pct: 0.08           # Trail by 8% from peak
+  max_hold_minutes: 10               # 10 min max hold (gamma decays fast)
+  max_trades_per_session: 4          # Max 4 trades in the 1-hour window
+  cooldown_after_trade_sec: 90       # 90s cooldown
+  cooldown_after_loss_sec: 180       # 3 min cooldown after loss
+  daily_loss_limit_pct: 0.04         # -4% daily circuit breaker

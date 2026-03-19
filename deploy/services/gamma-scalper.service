@@ -1,0 +1,22 @@
+[Unit]
+Description=Bot 6 — Gamma Acceleration Scalper
+After=ibgateway.service
+Requires=ibgateway.service
+
+[Service]
+Type=simple
+User=optionsbot
+Group=optionsbot
+WorkingDirectory=/home/optionsbot/options_bot
+Environment=DISPLAY=:1
+EnvironmentFile=/home/optionsbot/options_bot/.env
+ExecStart=/home/optionsbot/options_bot/.venv/bin/python gamma_scalper_live.py
+Restart=on-failure
+RestartSec=60
+TimeoutStartSec=30
+
+StandardOutput=append:/var/log/optbot/gamma-scalper.log
+StandardError=append:/var/log/optbot/gamma-scalper.log
+
+[Install]
+WantedBy=multi-user.target
